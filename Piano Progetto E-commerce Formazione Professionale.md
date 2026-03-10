@@ -54,6 +54,8 @@ Oltre al motore e-commerce per la formazione, il portale deve coprire anche le a
 
 L'architettura headless garantisce la separazione netta tra i contenuti editoriali e il motore transazionale MedusaJS, preservando le performance del sito. Le pagine vetrina contribuiranno inoltre alla strategia SEO come contenuti istituzionali autorevoli, rafforzando il posizionamento organico su keyword di settore legate alla consulenza antincendio e ai sistemi di rilevazione. La scelta specifica del CMS headless (es. Sanity, Strapi o soluzione equivalente) sarà definitiva nella fase di Pianificazione e Modeling.
 
+All'interno delle pagine istituzionali sarà inoltre presente una **sezione Brand & Portfolio Clienti**, dove verranno messi in evidenza i loghi delle aziende e dei gruppi industriali con cui l'Academy collabora. Questo elemento, esplicitamente richiesto nella call conoscitiva, ha una duplice funzione: rafforzare la credibilità istituzionale per i nuovi visitatori e contribuire ai segnali E-E-A-T necessari per la strategia GEO.
+
 ##
 
 ## **Requisiti Funzionali**
@@ -99,6 +101,8 @@ La fidelizzazione del discente è fondamentale in un settore dove le certificazi
 - **Remind Scadenza Certificati:** Il sistema invierà notifiche automatiche via email e SMS a scadenze predefinite: 90, 60 e 30 giorni prima della scadenza di un titolo ottenuto presso l'Academy. Questa funzione trasforma la conformità normativa in un'opportunità di vendita ricorrente.
 - **Cross-selling Formativo:** Sulla base dei corsi frequentati, il sistema suggerirà percorsi avanzati o complementari (es. dopo il "Antincendio Base", suggerimento automatico per il "Antincendio Avanzato" o "Security Awareness").
 - **Recupero Carrelli Abbandonati:** Data la complessità dell'upload documentale, è probabile che alcuni utenti interrompano il processo. Il sistema invierà reminder automatici per invitare al completamento dell'iscrizione prima che i posti si esauriscano.
+- **Dashboard Analytics e Reporting Corsi:** Il sistema esporrà una dashboard operativa con le metriche chiave di ogni edizione (tasso di riempimento, corsi più venduti, edizioni a rischio sotto-soglia). Questo strumento risponde a un'esigenza esplicitamente emersa nella fase di analisi: il team marketing interno necessita di sapere in tempo reale quali corsi performano meglio per coordinare le campagne social e decidere dove concentrare la comunicazione.
+- **Integrazione con Tool di Email Marketing Esterno:** Per le comunicazioni di newsletter manuale e campagne promozionali, il sistema prevede la possibilità di collegarsi a una piattaforma di email marketing esterna (es. Mailchimp, Klaviyo o equivalente), in alternativa o a complemento degli scheduled jobs nativi di Medusa. Questa opzione consente al team interno di gestire campagne editoriali in autonomia senza intervento tecnico, riducendo i costi di ownership rispetto allo sviluppo di funzionalità custom.
 
 ### **5\. Motore di Prenotazione e Gestione Calendario**
 
@@ -151,6 +155,8 @@ Con l'ascesa di ChatGPT, Perplexity e Google AI Overviews, la strategia SEO deve
 | Semantic Optimization | Citazioni in Perplexity/ChatGPT                | Branding come leader di pensiero nel settore |
 | Local SEO Puglia      | Dominio ricerche locali Taranto/Brindisi/Bari  | Riempimento costante aule fisiche            |
 
+> **Azione immediata – Google Business Profile:** Nella call conoscitiva è emerso che il profilo Google dell'Academy non è ancora stato rivendicato. La prima azione operativa, indipendente dallo sviluppo del sito, è la **registrazione e ottimizzazione del Google Business Profile** (nome, categoria, orari, foto, link al sito, gestione recensioni). Si tratta di un'attività a impatto immediato sulla visibilità locale e a costo pressoché nullo, da completare entro aprile contestualmente alla fase di Pianificazione e Modeling.
+
 ## **Panoramica Rilascio**
 
 Il rilascio della piattaforma Academy Tema Safety & Training è pianificato per settembre 2026, con un percorso di implementazione rigoroso suddiviso in milestone tecniche e operative.2 La strategia mira a garantire la massima stabilità del sistema documentale e di pagamento sin dal primo giorno.2
@@ -170,6 +176,8 @@ Il successo del progetto non dipende solo dalla tecnologia, ma dall'adozione da 
 - **Formazione Staff:** Sono previste sessioni di addestramento sull'uso del pannello Admin di Medusa per la validazione documenti e la gestione ordini.2
 - **Monitoraggio Post-Lancio:** Per i primi 90 giorni verrà istituito un "war room" tecnico per monitorare ogni transazione e raccogliere feedback dagli utenti finali, intervenendo tempestivamente su eventuali criticità della UX.2
 - **Scalabilità Fase 2:** Già in fase di rilascio a settembre, l'architettura sarà pronta per accogliere l'integrazione con Mago e i moduli B2B per la vendita a gruppi aziendali, prevista per l'inizio del 2027\.2
+- **Chatbot / Assistente AI (Fase 2):** Durante la call conoscitiva è stato discusso e accolto positivamente l'inserimento di un assistente conversazionale per guidare l'utente nella scelta del corso corretto e rispondere alle domande frequenti. Questo modulo, particolarmente utile per i corsisti ricorrenti che non ricordano quale certificato rinnovare, è pianificato come modulo aggiuntivo post go-live, una volta che il catalogo corsi sarà completo e strutturato sul portale.
+- **Internazionalizzazione e Chiarezza Lingua Corsi:** Il sito sarà bilingue (IT/EN) con gestione tramite tag `hreflang`. Per gli utenti che accedono in lingua inglese, ogni scheda corso riporterà in modo esplicito che la formazione si svolge **in lingua italiana e in presenza a Taranto**, evitando aspettative errate da parte di discenti o aziende estere. Questo requisito è emerso esplicitamente nella call e riguarda in particolare le aziende inglesi che inviano dipendenti italiani a formarsi in sede.
 
 ### **Analisi dei Rischi e Mitigazione**
 
@@ -178,6 +186,10 @@ Il successo del progetto non dipende solo dalla tecnologia, ma dall'adozione da 
 - **Rischio di Adozione:** Utenti "tradizionalisti" che continuano a chiamare. _Mitigazione:_ Politica commerciale che incentiva l'acquisto online (es. sconti early bird o priorità di conferma) e supporto guidato sul sito.
 - **Rischio di Overbooking:** In condizioni di elevata concorrenza sulle prenotazioni — tipica dell'apertura iscrizioni per corsi molto richiesti come il Basic Safety Training — più utenti potrebbero tentare di acquistare l'ultimo posto disponibile simultaneamente. _Mitigazione:_ La transazione di prenotazione sarà atomica a livello database, con un meccanismo di lock sul record dell'edizione che garantisce la sequenzialità del decremento della disponibilità, prevenendo qualsiasi forma di doppia vendita.
 - **Rischio di Blocco per Documenti Scaduti:** Discenti con certificati in scadenza imminente potrebbero non completare il processo di iscrizione, generando carrelli abbandonati e chiamate alla segreteria. _Mitigazione:_ Il sistema di alert scadenze (funzionalità 4) notificherà il discente con 90, 60 e 30 giorni di anticipo, consentendo il rinnovo dei titoli prima che diventino un ostacolo all'iscrizione a nuove edizioni.
+
+### **Agevolazioni Fiscali e Bandi**
+
+Durante la call conoscitiva, il cliente ha manifestato l'intenzione di esplorare fondi, bonus e agevolazioni fiscali per coprire parte dell'investimento digitale. Synesthesia dispone di un ufficio dedicato alla ricerca di bandi e agevolazioni per la trasformazione digitale delle PMI (es. voucher digitalizzazione, crediti d'imposta per investimenti tecnologici, bandi regionali Puglia). Si consiglia di avviare questa analisi parallelamente alla fase di Pianificazione e Modeling, in modo da poter eventualmente strutturare le voci di investimento in modo compatibile con i requisiti dei bandi individuati.
 
 ### **Voci di Costo – Brand Identity**
 
