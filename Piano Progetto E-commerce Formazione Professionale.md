@@ -26,7 +26,7 @@ L'esclusione dell'integrazione con Mago dalla Fase 1 è una scelta tecnica mirat
 
 ## **Progetto Academy**
 
-L'Academy Tema Safety & Training non è solo un centro di formazione, ma un hub di certificazione normativa. Il progetto digitale deve riflettere questa autorevolezza istituzionale attraverso un portale che integri informazione tecnica e capacità transazionale. Il catalogo, composto da circa 500 corsi, richiede una classificazione gerarchica complessa che permetta all'utente di identificare immediatamente il percorso formativo corretto in base alla propria carriera e alle scadenze dei propri titoli.
+L'Academy Tema Safety & Training non è un centro di formazione e un hub di certificazione normativa. Il progetto digitale deve riflettere questa autorevolezza istituzionale attraverso un portale che integri informazione tecnica e capacità transazionale. Il catalogo, composto da circa 500 corsi, richiede una classificazione gerarchica complessa che permetta all'utente di identificare immediatamente il percorso formativo corretto in base alla propria carriera e alle scadenze dei propri titoli.
 
 ### **Struttura del Catalogo e User Persona**
 
@@ -64,7 +64,7 @@ L'architettura funzionale del progetto è progettata per automatizzare l'intero 
 
 ### **1\. Flusso di Acquisto a Step Obbligati**
 
-Il processo di checkout non è una semplice transazione, ma una raccolta strutturata di dati anagrafici e professionali valida ai fini ministeriali. L'implementazione su MedusaJS utilizzerà i workflow personalizzati per garantire che nessuna vendita venga conclusa senza i dati necessari.
+Il processo di checkout è una raccolta strutturata di dati anagrafici e professionali valida ai fini ministeriali. L'implementazione su MedusaJS utilizzerà i workflow personalizzati per garantire che nessuna vendita venga conclusa senza i dati necessari.
 
 **A. Selezione Data ed Edizione:** L'utente non acquista un prodotto generico, ma una specifica sessione di addestramento legata a un calendario predefinito. Il sistema mostrerà solo le date con posti ancora disponibili, gestendo l'inventario in tempo reale attraverso il modulo Inventory di Medusa.
 
@@ -73,7 +73,9 @@ Il processo di checkout non è una semplice transazione, ma una raccolta struttu
 **C. Upload Documenti Ministeriali:** In base alla tipologia di corso selezionata, il sistema attiverà campi di upload dinamici.
 
 - Esempio STCW: Libretto di navigazione, certificato di idoneità medica, attestati propedeutici.
-- Esempio Sicurezza Industriale: Dichiarazione della società armatrice o contratto di lavoro. L'upload avverrà su storage protetto (AWS S3) tramite il FileService di MedusaJS, garantendo la non indicizzabilità dei documenti personali.
+- Esempio Sicurezza Industriale: Dichiarazione della società armatrice o contratto di lavoro.
+
+L'upload avverrà su storage protetto (AWS S3) tramite il FileService di MedusaJS, garantendo la non indicizzabilità dei documenti personali.
 
 **D. Pagamento e Chiusura Ordine:** Il sistema richiederà il pagamento dell'intero importo, eliminando la gestione manuale degli acconti. L'integrazione con gateway moderni permetterà di accettare carte di credito, bonifici bancari istantanei con riconciliazione tramite webhooks e pagamenti rateali.
 
@@ -83,16 +85,16 @@ La segreteria di Academy Tema Safety & Training spende attualmente ore nel verif
 
 - **Dashboard di Validazione:** Gli operatori disporranno di un'interfaccia nel pannello Admin di Medusa per visualizzare i documenti per ogni ordine. Potranno approvare il documento o richiedere un nuovo upload fornendo una causale predefinita.
 - **Vault Personale del Discente:** Ogni utente registrato avrà un'area "Documenti" dove potrà caricare i propri titoli una sola volta e utilizzarli per iscrizioni future, aggiornandoli solo in caso di scadenza.
-- **Tracciamento Scadenze:** Il sistema estrarrà (manualmente dagli operatori in Fase 1, o tramite OCR in futuro) le date di scadenza dei documenti caricati (es. certificato medico biennale).2 Il sistema impedirà l'iscrizione a corsi che si svolgono oltre la data di scadenza del documento necessario.
+- **Tracciamento Scadenze:** Il sistema estrarrà (manualmente dagli operatori in Fase 1, o tramite OCR in futuro) le date di scadenza dei documenti caricati (es. certificato medico biennale).
 
-### **3\. Automazione Conferma Corsi (Soglia 20 Persone)**
+### **3\. Automazione Conferma Corsi (Soglia di X Persone)**
 
-Per garantire la sostenibilità economica delle sessioni pratiche che richiedono attivazione di campo prove e istruttori multipli, è stato fissato un quorum di 20 partecipanti.
+Per garantire la sostenibilità economica delle sessioni pratiche che richiedono attivazione di campo prove e istruttori multipli, è stato fissato un quorum di partecipanti.
 
 - **Logica di Monitoraggio:** Uno Scheduled Job di Medusa monitorerà periodicamente lo stato delle iscrizioni per ogni edizione.
-- **Stato di Conferma:** Al raggiungimento della soglia (20/20 paganti), il sistema cambierà automaticamente lo stato dell'edizione in "Confermata".
-- **Workflow di Notifica:** Il trigger di conferma attiverà una comunicazione massiva via email a tutti i discenti con i dettagli logistici (orari, navetta, abbigliamento pratico) e agli istruttori interni per la preparazione dell'addestramento.
-- **Gestione Sotto-soglia:** Qualora la soglia non venisse raggiunta entro 7 giorni dall'inizio del corso, il sistema invierà un alert alla direzione per decidere se confermare manualmente l'edizione o procedere con il rinvio/rimborso automatico tramite i workflow di compensazione di Medusa.
+- **Stato di Conferma:** Al raggiungimento della soglia impostata, il sistema cambierà automaticamente lo stato dell'edizione in "Confermata".
+- **Workflow di Notifica:** Il trigger di conferma attiverà una comunicazione massiva via email a tutti i discenti con i dettagli logistici (orari, abbigliamento pratico) e agli istruttori interni per la preparazione dell'addestramento.
+- **Gestione Sotto-soglia:** Qualora la soglia non venisse raggiunta prima di N giorni decisi a priori. è possibile inviare una notifica agli amministraroti
 
 ### **4\. Sistema di Alert e Marketing Automation**
 
@@ -106,19 +108,18 @@ La fidelizzazione del discente è fondamentale in un settore dove le certificazi
 
 ### **5\. Motore di Prenotazione e Gestione Calendario**
 
-L'intera logica commerciale dell'Academy è fondata su un principio che differenzia radicalmente questo progetto da un e-commerce convenzionale: ogni acquisto non è la compravendita di un prodotto generico, ma la prenotazione di un posto fisico in una sessione d'addestramento datata, con una capienza reale e requisiti normativi specifici. Questa specificità impone l'implementazione di un modulo di booking nativo su MedusaJS, che governi il ciclo di vita completo di ogni edizione corso, dall'apertura delle iscrizioni alla registrazione dell'esito post-formazione.
+L'intera logica commerciale dell'Academy è fondata su un principio che differenzia radicalmente questo progetto da un e-commerce convenzionale: ogni acquisto è la prenotazione di un posto fisico in una sessione d'addestramento datata, con una capienza reale e requisiti normativi specifici. Questa specificità impone l'implementazione di un modulo di booking nativo su MedusaJS, che governi il ciclo di vita completo di ogni edizione corso, dall'apertura delle iscrizioni alla registrazione dell'esito post-formazione.
+![Mockup pagina prodotto](./course-product.png)
 
 **A. Calendario Interattivo per la Selezione dell'Edizione:** La scheda di ogni corso esporrà un calendario mensile che renderà immediatamente visibile la disponibilità delle sessioni programmate. Ogni data sarà codificata cromaticamente — verde per i posti disponibili con indicazione del numero residuo, giallo per le edizioni quasi esaurite, rosso per i corsi al completo con accesso alla lista d'attesa, grigio per le date già trascorse o temporaneamente bloccate per esigenze logistiche. Su dispositivi mobili, la vista si adatterà a un formato a lista cronologica per garantire la piena fruibilità anche a chi accede da impianti industriali o imbarcazioni con connettività limitata.
 
-**B. Gestione Capienza, Quorum e Lista d'Attesa:** Ogni edizione è configurata con una capienza massima e con la soglia minima di attivazione di 20 partecipanti già definita nella funzionalità 3. Quando un'edizione raggiunge il pieno, il sistema attiva automaticamente una lista d'attesa: all'eventuale cancellazione di un posto, il primo iscritto in lista riceve una notifica con un collegamento esclusivo di prenotazione valido per 48 ore. Allo scadere di questa finestra senza risposta, il sistema avanza in autonomia alla posizione successiva, garantendo il riempimento delle sessioni senza alcun intervento manuale della segreteria.
+**B. Gestione Capienza, Quorum e Lista d'Attesa:** Ogni edizione è configurata con una capienza massima e con la soglia minima di attivazione di X partecipanti già definita nella funzionalità 3. Quando un'edizione raggiunge il pieno, il sistema attiva automaticamente una lista d'attesa: all'eventuale cancellazione di un posto, il primo iscritto in lista riceve una notifica con un collegamento esclusivo di prenotazione valido per 48 ore. Allo scadere di questa finestra senza risposta, il sistema avanza in autonomia alla posizione successiva, garantendo il riempimento delle sessioni senza alcun intervento manuale della segreteria.
 
-**C. Politica di Cancellazione e Rimborso Scaglionato:** Per tutelare la sostenibilità economica delle sessioni, che richiedono l'attivazione del campo prove e la disponibilità degli istruttori, il sistema applicherà una politica di cancellazione strutturata per fasce temporali: rimborso integrale per le disdette effettuate con più di 14 giorni di anticipo, rimborso del 50% nella finestra tra i 14 e i 7 giorni, nessun rimborso per le cancellazioni nell'ultima settimana prima dell'inizio. L'intera procedura, inclusa la restituzione dei fondi sul gateway di pagamento originale, sarà automatizzata attraverso i workflow di compensazione di MedusaJS, eliminando la gestione manuale dei rimborsi dalla segreteria. Nel caso di cancellazione imputabile all'Academy, il rimborso sarà sempre integrale e automatico, indipendentemente dalla tempistica.
+**C. Prezzi Early Bird e Servizi Aggiuntivi:** Il modulo supporta regole di prezzo differenziate in funzione dell'anticipo con cui viene effettuata l'iscrizione. La configurazione di uno sconto per iscrizione anticipata — attivabile per singola edizione o come regola globale — incentiva la raccolta delle adesioni con largo anticipo, permettendo all'Academy di confermare le sessioni prima e di pianificare le risorse logistiche con maggiore certezza. Parallelamente, il discente potrà selezionare servizi accessori durante il checkout, come il trasporto navetta andata/ritorno o il kit di materiale didattico supplementare, aumentando il valore medio dell'ordine senza appesantire il processo di iscrizione.
 
-**D. Prezzi Early Bird e Servizi Aggiuntivi:** Il modulo supporta regole di prezzo differenziate in funzione dell'anticipo con cui viene effettuata l'iscrizione. La configurazione di uno sconto per iscrizione anticipata — attivabile per singola edizione o come regola globale — incentiva la raccolta delle adesioni con largo anticipo, permettendo all'Academy di confermare le sessioni prima e di pianificare le risorse logistiche con maggiore certezza. Parallelamente, il discente potrà selezionare servizi accessori durante il checkout, come il trasporto navetta andata/ritorno o il kit di materiale didattico supplementare, aumentando il valore medio dell'ordine senza appesantire il processo di iscrizione.
+**D. Controlli Automatici e Integrità del Processo:** Il motore di prenotazione è governato da controlli che operano in trasparenza per il discente ma rappresentano la spina dorsale della correttezza operativa. Le iscrizioni si chiudono automaticamente 48 ore prima dell'inizio di ogni sessione, prevenendo complicazioni logistiche dell'ultimo minuto. Il sistema blocca la prenotazione qualora i documenti obbligatori presenti nel Vault personale del discente risultino scaduti alla data dell'edizione selezionata, comunicando in modo esplicito quali titoli richiedono aggiornamento prima di procedere. Infine, è impedita l'iscrizione contemporanea a due edizioni con date sovrapposte, una casistica frequente tra i discenti che gestiscono autonomamente più percorsi formativi in parallelo.
 
-**E. Controlli Automatici e Integrità del Processo:** Il motore di prenotazione è governato da controlli che operano in trasparenza per il discente ma rappresentano la spina dorsale della correttezza operativa. Le iscrizioni si chiudono automaticamente 48 ore prima dell'inizio di ogni sessione, prevenendo complicazioni logistiche dell'ultimo minuto. Il sistema blocca la prenotazione qualora i documenti obbligatori presenti nel Vault personale del discente risultino scaduti alla data dell'edizione selezionata, comunicando in modo esplicito quali titoli richiedono aggiornamento prima di procedere. Infine, è impedita l'iscrizione contemporanea a due edizioni con date sovrapposte, una casistica frequente tra i discenti che gestiscono autonomamente più percorsi formativi in parallelo.
-
-**F. Gestione Operativa per la Segreteria:** La dashboard Admin di Medusa sarà estesa con una vista calendario dedicata che consente agli operatori di monitorare in tempo reale lo stato di tutte le edizioni programmate. Le funzionalità chiave includono la conferma manuale di un'edizione in deroga al quorum, il blocco temporaneo delle iscrizioni per esigenze logistiche, lo spostamento di una sessione con notifica automatica agli iscritti e l'esportazione della lista partecipanti in formato CSV per la compilazione dei registri d'esame ministeriali. Al termine di ogni sessione, gli operatori potranno registrare la presenza di ogni discente, alimentando lo storico formativo che guida i meccanismi di cross-selling e di alert scadenze certificati descritti nella funzionalità 4.
+**E. Gestione Operativa per la Segreteria:** La dashboard Admin di Medusa sarà estesa con una vista calendario dedicata che consente agli operatori di monitorare in tempo reale lo stato di tutte le edizioni programmate. Le funzionalità chiave includono la conferma manuale di un'edizione in deroga al quorum, il blocco temporaneo delle iscrizioni per esigenze logistiche, lo spostamento di una sessione con notifica automatica agli iscritti e l'esportazione della lista partecipanti in formato CSV per la compilazione dei registri d'esame ministeriali. Al termine di ogni sessione, gli operatori potranno registrare la presenza di ogni discente, alimentando lo storico formativo che guida i meccanismi di cross-selling e di alert scadenze certificati descritti nella funzionalità 4.
 
 ## **SEO e Architettura**
 
@@ -128,9 +129,9 @@ La visibilità organica è il pilastro su cui Academy Tema Safety & Training cos
 
 Il sito sarà sviluppato con Next.js (Storefront) connesso via API a MedusaJS (Backend). Questa configurazione garantisce velocità di caricamento fulminee, essenziali per il ranking su Google nel 2025 e 2026\.49
 
-- **Core Web Vitals:** Ottimizzazione metrica LCP (Largest Contentful Paint) per assicurare che le schede corsi siano visualizzabili in meno di 2 secondi anche su reti mobili instabili (tipiche di chi naviga da imbarcazioni o siti industriali).49
-- **Server Side Rendering (SSR):** Tutte le pagine dei corsi saranno generate lato server per permettere una scansione profonda da parte dei crawler di Google, indicizzando i calendari e le disponibilità in tempo reale.17
-- **Domain Strategy:** Consolidamento dell'identità digitale su un unico dominio autorevole, utilizzando tag hreflang per supportare la futura espansione internazionale (italiano/inglese).2
+- **Core Web Vitals:** Ottimizzazione metrica LCP (Largest Contentful Paint) per assicurare che le schede corsi siano visualizzabili in meno di 2 secondi anche su reti mobili instabili (tipiche di chi naviga da imbarcazioni o siti industriali).
+- **Server Side Rendering (SSR):** Tutte le pagine dei corsi saranno generate lato server per permettere una scansione profonda da parte dei crawler di Google, indicizzando i calendari e le disponibilità in tempo reale.
+- **Domain Strategy:** Consolidamento dell'identità digitale su un unico dominio autorevole, utilizzando tag hreflang per supportare la futura espansione internazionale (italiano/inglese).
 
 ### **Strategia Content e SEO Semantica**
 
@@ -184,7 +185,7 @@ Il successo del progetto non dipende solo dalla tecnologia, ma dall'adozione da 
 - **Rischio Tecnico:** Complessità dell'upload massivo di documenti pesanti. _Mitigazione:_ Utilizzo di caricamento asincrono e ridimensionamento automatico dei file lato client per non sovraccaricare il server.
 - **Rischio Normativo:** Cambiamenti repentini nelle richieste ministeriali. _Mitigazione:_ L'architettura modulare di Medusa permette di aggiungere o modificare campi del checkout in poche ore senza dover riscrivere il sistema.
 - **Rischio di Adozione:** Utenti "tradizionalisti" che continuano a chiamare. _Mitigazione:_ Politica commerciale che incentiva l'acquisto online (es. sconti early bird o priorità di conferma) e supporto guidato sul sito.
-- **Rischio di Overbooking:** In condizioni di elevata concorrenza sulle prenotazioni — tipica dell'apertura iscrizioni per corsi molto richiesti come il Basic Safety Training — più utenti potrebbero tentare di acquistare l'ultimo posto disponibile simultaneamente. _Mitigazione:_ La transazione di prenotazione sarà atomica a livello database, con un meccanismo di lock sul record dell'edizione che garantisce la sequenzialità del decremento della disponibilità, prevenendo qualsiasi forma di doppia vendita.
+- **Rischio di Overbooking:** In condizioni di elevata concorrenza sulle prenotazioni — tipica dell'apertura iscrizioni per corsi molto richiesti più utenti potrebbero tentare di acquistare l'ultimo posto disponibile simultaneamente. _Mitigazione:_ La transazione di prenotazione sarà atomica a livello database, con un meccanismo di lock sul record dell'edizione che garantisce la sequenzialità del decremento della disponibilità, prevenendo qualsiasi forma di doppia vendita.
 - **Rischio di Blocco per Documenti Scaduti:** Discenti con certificati in scadenza imminente potrebbero non completare il processo di iscrizione, generando carrelli abbandonati e chiamate alla segreteria. _Mitigazione:_ Il sistema di alert scadenze (funzionalità 4) notificherà il discente con 90, 60 e 30 giorni di anticipo, consentendo il rinnovo dei titoli prima che diventino un ostacolo all'iscrizione a nuove edizioni.
 
 ### **Agevolazioni Fiscali e Bandi**
