@@ -38,23 +38,29 @@
 
 ## 2. Fase 1 — Core (Go-Live Settembre 2026)
 
-| #   | Work Package                                                                                                                                                                       | Milestone | BE 👤    | FE 👤   | TOT 👤        | BE 🤖  | FE 🤖  | TOT 🤖        |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------- | ------- | ------------- | ------ | ------ | ------------- |
-| 1   | **Infra & DevOps** — EC2, Nginx, SSL, ambienti staging/prod, CI/CD pipeline (GitHub Actions)                                                                                       | Apr–Mag   | 3–5 gg   | 0–1 gg  | **3–6 gg**    | 2–3 gg | 0–1 gg | **2–4 gg**    |
-| 2   | **MedusaJS core** — installazione, data modeling custom (corsi, edizioni, booking, documenti), plugin structure                                                                    | Apr–Mag   | 4–7 gg   | —       | **4–7 gg**    | 2–4 gg | —      | **2–4 gg**    |
-| 3   | **PayloadCMS setup** — installazione, modellazione contenuti istituzionali (Consulenza, Vigilanza, Dante 4.0, Brand Portfolio, News)                                               | Apr–Mag   | 2–4 gg   | 1–2 gg  | **3–6 gg**    | 1–2 gg | 1–2 gg | **2–4 gg**    |
-| 4   | **Integrazione PayloadCMS → Next.js** — API routes, ISR/SSR content pages, preview mode, sezione Brand Portfolio                                                                   | Giu–Lug   | 2–3 gg   | 2–4 gg  | **4–7 gg**    | 1–2 gg | 1–2 gg | **2–4 gg**    |
-| 5   | **Modulo Booking custom** ⚠️ — entità `CourseEdition` / `Booking` / `Waitlist`, scheduled jobs, workflow conferma quorum, rimborso scaglionato, blackout dates, early bird pricing | Giu–Lug   | 10–15 gg | 5–8 gg  | **15–23 gg**  | 6–9 gg | 3–5 gg | **9–14 gg**   |
-| 6   | **Checkout multi-step** — raccolta anagrafica ministeriale, upload documenti S3, validazione Zod, integrazione gateway pagamento (carta, bonifico, rateale)                        | Giu–Lug   | 5–8 gg   | 4–6 gg  | **9–14 gg**   | 3–5 gg | 2–4 gg | **5–9 gg**    |
-| 7   | **Dashboard admin segreteria** — calendario edizioni, validazione documenti (approvazione / richiesta nuovo upload), export CSV registri, gestione quorum manuale                  | Giu–Lug   | 3–5 gg   | 4–7 gg  | **7–12 gg**   | 2–3 gg | 2–4 gg | **4–7 gg**    |
-| 8   | **Next.js storefront** — catalogo corsi (filtri per settore), schede corso con calendario interattivo, carrello, account discente (prenotazioni, vault documenti)                  | Giu–Lug   | 2–4 gg   | 8–12 gg | **10–16 gg**  | 1–2 gg | 5–8 gg | **6–10 gg**   |
-| 9a  | **Ricerca — Algolia** _(opzione A: hosted)_ — indexing prodotti/edizioni, InstantSearch UI, relevance tuning, filtri                                                               | Lug–Ago   | 2–3 gg   | 1–2 gg  | **3–5 gg**    | 1–2 gg | 1 gg   | **2–3 gg**    |
-| 9b  | **Ricerca — MeiliSearch** _(opzione B: self-hosted su EC2)_ — installazione, configurazione indici, sync job con Medusa, UI search                                                 | Lug–Ago   | 3–5 gg   | 1–2 gg  | **4–7 gg**    | 2–3 gg | 1–2 gg | **3–5 gg**    |
-| 10  | **Marketing automation** — alert scadenze certificati (90/60/30 gg), recupero carrello abbandonato, reminder pre-corso, cross-selling formativo                                    | Lug–Ago   | 4–6 gg   | 1–2 gg  | **5–8 gg**    | 2–4 gg | 1 gg   | **3–5 gg**    |
-| 11  | **SEO tecnico** — JSON-LD `Course` / `EducationEvent`, sitemap XML, SSR ottimizzato, Core Web Vitals, hreflang IT/EN (struttura)                                                   | Lug–Ago   | 1–2 gg   | 3–5 gg  | **4–7 gg**    | 1 gg   | 2–3 gg | **3–4 gg**    |
-| 12  | **Preparazione dati sorgente** ⛔ _dipendenza esterna Academy_ — normalizzazione, categorizzazione e consegna dati 500 corsi in formato strutturato                                | Lug       | —        | —       | **5–10 gg\*** | —      | —      | **5–10 gg\*** |
-| 13  | **Ingestion catalogo 500 corsi** — script import, QA dati, ottimizzazione SEO schede, associazione requisiti documentali per categoria                                             | Lug–Ago   | 3–5 gg   | 0–1 gg  | **3–6 gg**    | 2–3 gg | 0–1 gg | **2–4 gg**    |
-| 14  | **Testing & QA / UAT** — test di carico (afflusso simultaneo), test E2E (Playwright), UAT con staff Academy su flussi segreteria                                                   | Ago       | 3–5 gg   | 2–4 gg  | **5–9 gg**    | 2–3 gg | 1–3 gg | **3–6 gg**    |
+| #   | Work Package                                                                                                                                                                                                                                                                                         | Milestone | BE 👤    | FE 👤   | TOT 👤        | BE 🤖  | FE 🤖  | TOT 🤖        |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------- | ------- | ------------- | ------ | ------ | ------------- |
+| 1   | **Infra & DevOps** — EC2, Nginx, SSL, ambienti staging/prod, CI/CD pipeline (GitHub Actions)                                                                                                                                                                                                         | Apr–Mag   | 3–5 gg   | 0–1 gg  | **3–6 gg**    | 2–3 gg | 0–1 gg | **2–4 gg**    |
+| 2   | **MedusaJS core** — installazione, data modeling custom (corsi, edizioni, booking, documenti), plugin structure                                                                                                                                                                                      | Apr–Mag   | 4–7 gg   | —       | **4–7 gg**    | 2–4 gg | —      | **2–4 gg**    |
+| 3   | **PayloadCMS setup** — installazione, modellazione contenuti istituzionali (Consulenza, Vigilanza, Dante 4.0, Brand Portfolio, News)                                                                                                                                                                 | Apr–Mag   | 2–4 gg   | 1–2 gg  | **3–6 gg**    | 1–2 gg | 1–2 gg | **2–4 gg**    |
+| 4   | **Integrazione PayloadCMS → Next.js** — API routes, ISR/SSR content pages, preview mode, sezione Brand Portfolio                                                                                                                                                                                     | Giu–Lug   | 2–3 gg   | 2–4 gg  | **4–7 gg**    | 1–2 gg | 1–2 gg | **2–4 gg**    |
+| 5   | **Modulo Booking custom** ⚠️ — entità `CourseEdition` / `Booking` / `Waitlist`, scheduled jobs, workflow conferma quorum, rimborso scaglionato, blackout dates, early bird pricing _(FE incluso: waitlist UI, status badge, pagina conferma prenotazione — calendario interattivo spostato in #8.4)_ | Giu–Lug   | 10–15 gg | 2–4 gg  | **12–19 gg**  | 6–9 gg | 1–3 gg | **7–12 gg**   |
+| 6   | **Checkout multi-step** — raccolta anagrafica ministeriale, upload documenti S3, validazione Zod, integrazione gateway pagamento (carta, bonifico, rateale) _(FE incluso: stepper multi-step, drag&drop upload con preview e progress bar, form dinamici per tipo corso)_                            | Giu–Lug   | 5–8 gg   | 6–9 gg  | **11–17 gg**  | 3–5 gg | 4–6 gg | **7–11 gg**   |
+| 7   | **Dashboard admin segreteria** — calendario edizioni, validazione documenti (approvazione / richiesta nuovo upload), export CSV registri, gestione quorum manuale                                                                                                                                    | Giu–Lug   | 3–5 gg   | 4–7 gg  | **7–12 gg**   | 2–3 gg | 2–4 gg | **4–7 gg**    |
+| 8.1 | **FE – Header & Navigation** — mega-menu settori (Marittimo / Industriale / Offshore / Civile), mobile nav drawer, sticky scroll, badge carrello con count, stato autenticazione (logged in/out)                                                                                                     | Giu–Lug   | 0–1 gg   | 3–5 gg  | **3–6 gg**    | —      | 2–3 gg | **2–3 gg**    |
+| 8.2 | **FE – Footer** — link istituzionali, loghi accreditamenti (MIT, MCA, Ministero Interno), newsletter opt-in, social links, disclaimer lingua formazione                                                                                                                                              | Giu–Lug   | —        | 1–2 gg  | **1–2 gg**    | —      | 1 gg   | **1 gg**      |
+| 8.3 | **FE – Pagina Categoria / Catalogo** — filtri multi-livello (settore, durata, disponibilità, livello), grid corsi con badge stato, URL query params SEO-friendly, paginazione / infinite scroll, ottimizzazione mobile                                                                               | Giu–Lug   | —        | 4–7 gg  | **4–7 gg**    | —      | 2–4 gg | **2–4 gg**    |
+| 8.4 | **FE – Pagina Prodotto / Scheda Corso** ⚠️ — descrizione, accordion requisiti documentali, **calendario interattivo edizioni** (badge verde/giallo/rosso/grigio, drawer dettaglio slot, barra riempimento visiva, mobile list view), cross-selling corsi correlati                                   | Giu–Lug   | —        | 7–11 gg | **7–11 gg**   | —      | 4–7 gg | **4–7 gg**    |
+| 8.5 | **FE – Modulo Contatti** — form segmentato B2B / B2C, validazione client-side, success/error states, integrazione API backend                                                                                                                                                                        | Lug       | —        | 1–2 gg  | **1–2 gg**    | —      | 1 gg   | **1 gg**      |
+| 8.6 | **FE – Cart** — mini-cart sidebar, pagina carrello completa, selezione add-on (navetta/kit), riepilogo edizione prenotata con date e sede, early bird badge applicato al subtotale                                                                                                                   | Giu–Lug   | 0–1 gg   | 3–5 gg  | **3–6 gg**    | —      | 2–3 gg | **2–3 gg**    |
+| 8.7 | **FE – Account / Area Personale** — dashboard prenotazioni (stato, cancellazione con anteprima rimborso scaglionato), Vault Documenti (upload, alert scadenze), storico corsi completati, modifica profilo                                                                                           | Lug       | 0–1 gg   | 5–8 gg  | **5–9 gg**    | —      | 3–5 gg | **3–5 gg**    |
+| 9a  | **Ricerca — Algolia** _(opzione A: hosted)_ — indexing prodotti/edizioni, InstantSearch UI, relevance tuning, filtri                                                                                                                                                                                 | Lug–Ago   | 2–3 gg   | 1–2 gg  | **3–5 gg**    | 1–2 gg | 1 gg   | **2–3 gg**    |
+| 9b  | **Ricerca — MeiliSearch** _(opzione B: self-hosted su EC2)_ — installazione, configurazione indici, sync job con Medusa, UI search                                                                                                                                                                   | Lug–Ago   | 3–5 gg   | 1–2 gg  | **4–7 gg**    | 2–3 gg | 1–2 gg | **3–5 gg**    |
+| 10  | **Marketing automation** — alert scadenze certificati (90/60/30 gg), recupero carrello abbandonato, reminder pre-corso, cross-selling formativo                                                                                                                                                      | Lug–Ago   | 4–6 gg   | 1–2 gg  | **5–8 gg**    | 2–4 gg | 1 gg   | **3–5 gg**    |
+| 11  | **SEO tecnico** — JSON-LD `Course` / `EducationEvent`, sitemap XML, SSR ottimizzato, Core Web Vitals, hreflang IT/EN (struttura)                                                                                                                                                                     | Lug–Ago   | 1–2 gg   | 3–5 gg  | **4–7 gg**    | 1 gg   | 2–3 gg | **3–4 gg**    |
+| 12  | **Preparazione dati sorgente** ⛔ _dipendenza esterna Academy_ — normalizzazione, categorizzazione e consegna dati 500 corsi in formato strutturato                                                                                                                                                  | Lug       | —        | —       | **5–10 gg\*** | —      | —      | **5–10 gg\*** |
+| 13  | **Ingestion catalogo 500 corsi** — script import, QA dati, ottimizzazione SEO schede, associazione requisiti documentali per categoria                                                                                                                                                               | Lug–Ago   | 3–5 gg   | 0–1 gg  | **3–6 gg**    | 2–3 gg | 0–1 gg | **2–4 gg**    |
+| 14  | **Testing & QA / UAT** — test di carico (afflusso simultaneo), test E2E (Playwright), UAT con staff Academy su flussi segreteria                                                                                                                                                                     | Ago       | 3–5 gg   | 2–4 gg  | **5–9 gg**    | 2–3 gg | 1–3 gg | **3–6 gg**    |
 
 _\* Giorni stimati lato Academy, non imputabili al team di sviluppo. Il valore non è incluso nei totali._
 
@@ -66,17 +72,17 @@ _\* Giorni stimati lato Academy, non imputabili al team di sviluppo. Il valore n
 
 |                            | BE 👤 | FE 👤 | **TOT 👤** | BE 🤖 | FE 🤖 | **TOT 🤖** | Risparmio AI |
 | -------------------------- | ----- | ----- | ---------- | ----- | ----- | ---------- | ------------ |
-| **Minimo (ottimistico)**   | 39 gg | 31 gg | **70 gg**  | 23 gg | 19 gg | **43 gg**  | ~38%         |
-| **Massimo (pessimistico)** | 65 gg | 54 gg | **119 gg** | 37 gg | 34 gg | **71 gg**  | ~40%         |
+| **Minimo (ottimistico)**   | 42 gg | 46 gg | **88 gg**  | 25 gg | 29 gg | **54 gg**  | ~39%         |
+| **Massimo (pessimistico)** | 71 gg | 81 gg | **152 gg** | 41 gg | 51 gg | **92 gg**  | ~39%         |
 
 #### Con 2 Dev in Parallelo (fattore compressione 1.6x)
 
 |                        | Team Umano | Team AI    |
 | ---------------------- | ---------- | ---------- |
-| **Minimo calendario**  | ~44 giorni | ~27 giorni |
-| **Massimo calendario** | ~74 giorni | ~44 giorni |
+| **Minimo calendario**  | ~55 giorni | ~34 giorni |
+| **Massimo calendario** | ~95 giorni | ~58 giorni |
 
-> Con go-live target a **settembre 2026** e kick-off aprile, la finestra disponibile è ~22 settimane (~110 giorni lavorativi). Il piano è compatibile in entrambi gli scenari, con margine di buffer maggiore nel caso AI.
+> Con go-live target a **settembre 2026** e kick-off aprile, la finestra disponibile è ~22 settimane (~110 giorni lavorativi). Lo scenario **Team AI è confortevolmente compatibile** (max ~58 gg calendario, ~4 settimane di buffer). Lo scenario **Team Umano nel caso pessimistico (~95 gg)** richiede avvio puntuale ad aprile, 2 dev in parallelo dall'inizio e assenza di blocchi sulla dipendenza esterna #12 (dati Academy).
 
 ---
 
@@ -101,9 +107,9 @@ _\* Giorni stimati lato Academy, non imputabili al team di sviluppo. Il valore n
 
 | Fase                   | TOT 👤         | TOT 🤖        |
 | ---------------------- | -------------- | ------------- |
-| **Fase 1 — Core**      | 70–119 gg      | 43–71 gg      |
+| **Fase 1 — Core**      | 88–152 gg      | 54–92 gg      |
 | **Fase 2 — Opzionali** | 38–69 gg       | 24–45 gg      |
-| **Totale complessivo** | **108–188 gg** | **67–116 gg** |
+| **Totale complessivo** | **126–221 gg** | **78–137 gg** |
 
 ---
 
