@@ -77,13 +77,13 @@ Il processo di checkout è una raccolta strutturata di dati anagrafici e profess
 
 L'upload avverrà su storage protetto (AWS S3) tramite il FileService di MedusaJS, garantendo la non indicizzabilità dei documenti personali.
 
-**D. Pagamento e Chiusura Ordine:** Il sistema richiederà il pagamento dell'intero importo, eliminando la gestione manuale degli acconti. L'integrazione con gateway moderni permetterà di accettare carte di credito, bonifici bancari istantanei con riconciliazione tramite webhooks e pagamenti rateali.
+**D. Validazione Documenti e Link di Pagamento:** A differenza di un e-commerce tradizionale, il pagamento non avviene immediatamente al termine dell'upload documentale. Completata la raccolta documentale, la prenotazione entra in stato di **attesa di validazione** (`PENDING_DOCS_REVIEW`): il posto viene riservato ma il corso non è ancora considerato prenotato. Un operatore di segreteria, tramite il pannello Admin, verifica i documenti caricati e, una volta approvati, il sistema invia automaticamente al discente un'**email con link di pagamento** — per l'importo intero o per un acconto configurabile — da completare entro **48 ore** (intervallo configurabile per corso). Solo al ricevimento del pagamento la prenotazione è considerata ufficialmente confermata e il discente riceve la ricevuta con i dettagli del corso. In caso di rifiuto dei documenti, il discente riceve una notifica con la causale specifica e un link per il re-upload, senza perdere la propria prenotazione temporanea.
 
 ### **2\. Gestione Documentale Avanzata**
 
 La segreteria di Academy Tema Safety & Training spende attualmente ore nel verificare documenti ricevuti via email in formati spesso illeggibili o con scadenze superate.
 
-- **Dashboard di Validazione:** Gli operatori disporranno di un'interfaccia nel pannello Admin di Medusa per visualizzare i documenti per ogni ordine. Potranno approvare il documento o richiedere un nuovo upload fornendo una causale predefinita.
+- **Dashboard di Validazione:** Gli operatori disporranno di un'interfaccia nel pannello Admin di Medusa dedicata alle prenotazioni in stato `PENDING_DOCS_REVIEW`, con badge di conteggio in tempo reale delle richieste da esaminare. Per ogni prenotazione potranno visualizzare i documenti caricati con anteprima, quindi **approvare** — il che genera automaticamente un link di pagamento (importo intero o acconto configurabile) con scadenza 48 ore e lo invia via email al discente — oppure **rifiutare** fornendo una causale predefinita (es. "documento scaduto", "illeggibile", "non corrispondente al requisito"), che notifica il discente e lo invita al re-upload. Il corso è considerato ufficialmente prenotato solo al completamento del pagamento successivo alla validazione.
 - **Vault Personale del Discente:** Ogni utente registrato avrà un'area "Documenti" dove potrà caricare i propri titoli una sola volta e utilizzarli per iscrizioni future, aggiornandoli solo in caso di scadenza.
 - **Tracciamento Scadenze:** Il sistema estrarrà (manualmente dagli operatori in Fase 1, o tramite OCR in futuro) le date di scadenza dei documenti caricati (es. certificato medico biennale).
 

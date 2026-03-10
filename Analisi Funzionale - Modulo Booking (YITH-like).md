@@ -80,10 +80,19 @@ Il modulo introduce tre nuove entità nel database MedusaJS, collegate al `Produ
 │  edition_id          FK → CourseEdition                             │
 │  order_id            FK → Order (Medusa)                            │
 │  customer_id         FK → Customer (Medusa)                         │
-│  status              ENUM    [PENDING, CONFIRMED, WAITLISTED,       │
-│                               CANCELLED, ATTENDED, NO_SHOW]         │
+│  status              ENUM    [PENDING_DOCS_REVIEW,                  │
+│                               DOCS_REJECTED,                        │
+│                               PENDING_PAYMENT,                      │
+│                               DEPOSIT_PAID, CONFIRMED,              │
+│                               WAITLISTED, CANCELLED,                │
+│                               ATTENDED, NO_SHOW]                    │
 │  seats               INT     (default: 1, multi per B2B)           │
 │  addons[]            JSONB   (navetta, pernottamento, ...)          │
+│  deposit_amount      DECIMAL NULL (importo acconto richiesto)       │
+│  payment_link_expires_at DATETIME NULL                              │
+│  docs_reviewed_by    UUID    NULL FK → Staff                        │
+│  docs_reviewed_at    DATETIME NULL                                  │
+│  docs_rejection_note TEXT    NULL                                   │
 │  cancellation_date   DATETIME NULL                                  │
 │  refund_amount       DECIMAL NULL                                   │
 │  attended            BOOL    NULL (registrato post-corso)           │
@@ -163,19 +172,47 @@ Il modulo introduce tre nuove entità nel database MedusaJS, collegate al `Produ
     (flusso già definito nel Piano Progetto padre)
         │
         ▼
-[6] Checkout Step 2 – Pagamento
-    → Al successo del pagamento:
-       • Creazione record BOOKING (status: PENDING)
-       • Decremento posti disponibili in CourseEdition
-       • Email di conferma prenotazione (con riepilogo edizione)
+[6] Invio Richiesta di Prenotazione (senza pagamento immediato)
+    → Al completamento dell'upload documenti:
+       • Creazione record BOOKING (status: PENDING_DOCS_REVIEW)
+       • Posto riservato in CourseEdition (soft-lock)
+       • Email al discente: "Richiesta ricevuta – documenti in revisione"
+       • Notifica admin: nuova prenotazione da validare
         │
         ▼
-[7] Monitoraggio soglia (Scheduled Job ogni 30 min)
-    ├─ IF bookings >= min_threshold AND status = OPEN
-    │     → status = CONFIRMED
+[7] Validazione Documenti (Operatore Admin)
+    ├─ IF documenti APPROVATI:
+    │     → BOOKING.status = PENDING_PAYMENT
+    │     → Sistema genera link di pagamento (intero o acconto)
+    │     → payment_link_expires_at = now + 48 ore
+    │     → Email al discente con link pagamento e scadenza 48h
+    │
+    └─ IF documenti RIFIUTATI:
+          → BOOKING.status = DOCS_REJECTED
+          → Email al discente con causale e link per re-upload
+          → Posto rimane riservato per N ore (configurabile)
+        │
+        ▼
+[8] Pagamento (Discente entro 48 ore dal link ricevuto)
+    ├─ IF pagamento completato entro scadenza:
+    │     → BOOKING.status = CONFIRMED (pagamento totale)
+    │        oppure DEPOSIT_PAID (pagamento acconto)
+    │     → Decremento definitivo posti in CourseEdition
+    │     → Email di conferma prenotazione ufficiale
+    │
+    └─ IF timeout 48h senza pagamento:
+          → BOOKING.status = CANCELLED
+          → Posto liberato in CourseEdition
+          → Email notifica scadenza al discente
+        │
+        ▼
+[9] Monitoraggio soglia (Scheduled Job ogni 30 min)
+    Conta bookings in stato CONFIRMED + DEPOSIT_PAID
+    ├─ IF count >= min_threshold AND edition.status = OPEN
+    │     → edition.status = CONFIRMED
     │     → Notifica massiva a tutti i partecipanti
     │     → Notifica istruttori
-    └─ IF start_date - 7gg AND bookings < min_threshold
+    └─ IF start_date - 7gg AND count < min_threshold
           → Alert direzione per decisione manuale
 ```
 
@@ -248,6 +285,42 @@ Il modulo introduce tre nuove entità nel database MedusaJS, collegate al `Produ
     └─ Trigger lista d'attesa (se applicabile)
 ```
 
+### 4.5 Flusso Admin – Validazione Documenti e Invio Link Pagamento
+
+```
+[Nuova prenotazione ricevuta → BOOKING.status = PENDING_DOCS_REVIEW]
+        │
+        ▼
+[Admin Dashboard → Sezione "Da Validare" (badge con contatore in tempo reale)]
+    → Lista filtrabile per corso, edizione, data ricezione, nome discente
+        │
+        ▼
+[Admin apre dettaglio prenotazione]
+    → Anteprima di ogni documento caricato (PDF / immagine)
+    → Verifica: validità, scadenza, corrispondenza al tipo corso
+        │
+        ├─ [APPROVA DOCUMENTI]
+        │       → Selezione modalità pagamento:
+        │           • Importo intero
+        │           • Acconto (importo fisso o % configurabile per corso)
+        │       → Sistema genera link di pagamento via gateway
+        │       → BOOKING.status = PENDING_PAYMENT
+        │       → payment_link_expires_at = now + 48 ore
+        │       → Email al discente: link + importo + scadenza 48h
+        │       → Log azione: operatore, timestamp, modalità selezionata
+        │
+        └─ [RIFIUTA DOCUMENTI]
+                → Selezione causale predefinita:
+                    • "Documento scaduto"
+                    • "Documento illeggibile o di bassa qualità"
+                    • "Non corrispondente al requisito richiesto"
+                    • "Firma o timbro mancante"
+                    • Nota libera aggiuntiva
+                → BOOKING.status = DOCS_REJECTED
+                → Email al discente: causale + link re-upload
+                → Posto rimane riservato per N ore (configurabile, es. 72h)
+```
+
 ---
 
 ## 5. Interfaccia Storefront (Next.js)
@@ -293,12 +366,12 @@ Response:
 
 Sezione dedicata nell'account utente che mostra:
 
-| Sezione              | Contenuto                                                                        |
-| -------------------- | -------------------------------------------------------------------------------- |
-| **Prossimi corsi**   | Lista prenotazioni con stato (Confermato / In attesa di quorum / Lista d'attesa) |
-| **Corsi completati** | Storico con possibilità di scaricare l'attestato (Fase 2)                        |
-| **Cancellazioni**    | Pulsante cancella con anteprima rimborso, solo entro policy                      |
-| **Lista d'attesa**   | Posizione corrente, stima tempi, opzione di uscita dalla lista                   |
+| Sezione              | Contenuto                                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Prossimi corsi**   | Lista prenotazioni con stato (Documenti in Revisione / Documenti Rifiutati – Ri-carica / In attesa di Pagamento / Acconto Versato / Confermato / In attesa di quorum / Lista d'attesa) |
+| **Corsi completati** | Storico con possibilità di scaricare l'attestato (Fase 2)                                                                                                                              |
+| **Cancellazioni**    | Pulsante cancella con anteprima rimborso, solo entro policy                                                                                                                            |
+| **Lista d'attesa**   | Posizione corrente, stima tempi, opzione di uscita dalla lista                                                                                                                         |
 
 ---
 
@@ -340,17 +413,23 @@ Pannello dedicato (Settings → Booking) per:
 
 ## 7. Sistema di Notifiche
 
-| Trigger                                                | Destinatario                    | Canale      | Template                  |
-| ------------------------------------------------------ | ------------------------------- | ----------- | ------------------------- |
-| Prenotazione ricevuta                                  | Discente                        | Email       | `booking_confirmed`       |
-| Edizione confermata (quorum raggiunto)                 | Tutti gli iscritti + istruttori | Email       | `edition_confirmed`       |
-| Edizione a rischio cancellazione (< 7gg, sotto soglia) | Direzione                       | Email       | `edition_at_risk`         |
-| Edizione cancellata dall'admin                         | Tutti gli iscritti              | Email + SMS | `edition_cancelled`       |
-| Posto disponibile (da waitlist)                        | Primo in lista                  | Email       | `waitlist_seat_available` |
-| Cancellazione da utente                                | Discente                        | Email       | `booking_cancelled`       |
-| Reminder pre-corso 7 giorni                            | Discente                        | Email       | `reminder_7d`             |
-| Reminder pre-corso 1 giorno                            | Discente                        | Email + SMS | `reminder_1d`             |
-| Spostamento data sessione                              | Tutti gli iscritti              | Email       | `edition_rescheduled`     |
+| Trigger                                                | Destinatario                    | Canale            | Template                  |
+| ------------------------------------------------------ | ------------------------------- | ----------------- | ------------------------- |
+| Richiesta ricevuta – documenti in revisione            | Discente                        | Email             | `booking_received`        |
+| Nuova prenotazione da validare                         | Operatori Admin                 | Email / Dashboard | `admin_docs_pending`      |
+| Documenti approvati – link di pagamento inviato        | Discente                        | Email             | `docs_approved_payment`   |
+| Documenti rifiutati – re-upload richiesto              | Discente                        | Email             | `docs_rejected_reupload`  |
+| Link di pagamento scaduto (48h)                        | Discente + Admin                | Email             | `payment_link_expired`    |
+| Acconto ricevuto – saldo da completare                 | Discente                        | Email             | `deposit_received`        |
+| Prenotazione confermata (dopo pagamento)               | Discente                        | Email             | `booking_confirmed`       |
+| Edizione confermata (quorum raggiunto)                 | Tutti gli iscritti + istruttori | Email             | `edition_confirmed`       |
+| Edizione a rischio cancellazione (< 7gg, sotto soglia) | Direzione                       | Email             | `edition_at_risk`         |
+| Edizione cancellata dall'admin                         | Tutti gli iscritti              | Email + SMS       | `edition_cancelled`       |
+| Posto disponibile (da waitlist)                        | Primo in lista                  | Email             | `waitlist_seat_available` |
+| Cancellazione da utente                                | Discente                        | Email             | `booking_cancelled`       |
+| Reminder pre-corso 7 giorni                            | Discente                        | Email             | `reminder_7d`             |
+| Reminder pre-corso 1 giorno                            | Discente                        | Email + SMS       | `reminder_1d`             |
+| Spostamento data sessione                              | Tutti gli iscritti              | Email             | `edition_rescheduled`     |
 
 Tutti i template utilizzano il `NotificationProvider` di MedusaJS (es. SendGrid per email, Twilio per SMS), già pianificato nel progetto padre.
 
@@ -371,29 +450,33 @@ Tutti i template utilizzano il `NotificationProvider` di MedusaJS (es. SendGrid 
 
 ### Admin API (riservata)
 
-| Metodo   | Endpoint                         | Descrizione                                |
-| -------- | -------------------------------- | ------------------------------------------ |
-| `GET`    | `/admin/editions`                | Lista tutte le edizioni                    |
-| `POST`   | `/admin/editions`                | Crea nuova edizione                        |
-| `PATCH`  | `/admin/editions/:id`            | Modifica edizione (data, stato, capienza)  |
-| `DELETE` | `/admin/editions/:id`            | Cancella edizione con rimborsi             |
-| `GET`    | `/admin/editions/:id/bookings`   | Lista prenotazioni per edizione            |
-| `PATCH`  | `/admin/bookings/:id`            | Modifica stato booking (check-in, no-show) |
-| `POST`   | `/admin/editions/:id/confirm`    | Conferma manuale override quorum           |
-| `POST`   | `/admin/editions/:id/reschedule` | Sposta data con notifica automatica        |
-| `GET`    | `/admin/editions/:id/export`     | Export CSV partecipanti                    |
+| Metodo   | Endpoint                           | Descrizione                                           |
+| -------- | ---------------------------------- | ----------------------------------------------------- |
+| `GET`    | `/admin/editions`                  | Lista tutte le edizioni                               |
+| `POST`   | `/admin/editions`                  | Crea nuova edizione                                   |
+| `PATCH`  | `/admin/editions/:id`              | Modifica edizione (data, stato, capienza)             |
+| `DELETE` | `/admin/editions/:id`              | Cancella edizione con rimborsi                        |
+| `GET`    | `/admin/editions/:id/bookings`     | Lista prenotazioni per edizione                       |
+| `PATCH`  | `/admin/bookings/:id`              | Modifica stato booking (check-in, no-show)            |
+| `POST`   | `/admin/editions/:id/confirm`      | Conferma manuale override quorum                      |
+| `POST`   | `/admin/editions/:id/reschedule`   | Sposta data con notifica automatica                   |
+| `GET`    | `/admin/editions/:id/export`       | Export CSV partecipanti                               |
+| `GET`    | `/admin/bookings/pending-docs`     | Lista prenotazioni in attesa di validazione documenti |
+| `PATCH`  | `/admin/bookings/:id/approve-docs` | Approva documenti e invia link pagamento al discente  |
+| `PATCH`  | `/admin/bookings/:id/reject-docs`  | Rifiuta documenti con causale predefinita             |
 
 ---
 
 ## 9. Scheduled Jobs (Background Tasks)
 
-| Job                            | Frequenza             | Logica                                                                           |
-| ------------------------------ | --------------------- | -------------------------------------------------------------------------------- |
-| `check-edition-thresholds`     | Ogni 30 minuti        | Verifica se edizioni OPEN hanno raggiunto min_threshold → auto-CONFIRMED         |
-| `at-risk-editions-alert`       | Ogni giorno ore 09:00 | Notifica direzione per edizioni che iniziano in < 7 giorni ancora sotto soglia   |
-| `waitlist-expiry-check`        | Ogni ora              | Scade offerte waitlist non accettate entro 48h, avanza alla posizione successiva |
-| `pre-course-reminders`         | Ogni giorno ore 08:00 | Invia reminder a discenti con corsi nei prossimi 7 e 1 giorno                    |
-| `edition-status-auto-complete` | Ogni giorno ore 23:00 | Marca come COMPLETED le edizioni la cui `end_date` è passata                     |
+| Job                            | Frequenza             | Logica                                                                                                  |
+| ------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------- |
+| `check-edition-thresholds`     | Ogni 30 minuti        | Verifica se edizioni OPEN hanno raggiunto min_threshold → auto-CONFIRMED                                |
+| `at-risk-editions-alert`       | Ogni giorno ore 09:00 | Notifica direzione per edizioni che iniziano in < 7 giorni ancora sotto soglia                          |
+| `waitlist-expiry-check`        | Ogni ora              | Scade offerte waitlist non accettate entro 48h, avanza alla posizione successiva                        |
+| `payment-link-expiry-check`    | Ogni 15 minuti        | Cancella booking `PENDING_PAYMENT` con link scaduto (+48h), libera il posto e notifica discente e admin |
+| `pre-course-reminders`         | Ogni giorno ore 08:00 | Invia reminder a discenti con corsi nei prossimi 7 e 1 giorno                                           |
+| `edition-status-auto-complete` | Ogni giorno ore 23:00 | Marca come COMPLETED le edizioni la cui `end_date` è passata                                            |
 
 ---
 
@@ -409,18 +492,26 @@ Tutti i template utilizzano il `NotificationProvider` di MedusaJS (es. SendGrid 
 
 5. **Quorum e rimborso automatico:** Se un'edizione viene cancellata dall'admin con booking attivi, il workflow di rimborso si attiva in batch, processando tutti gli ordini associati. I rimborsi vengono erogati al 100% indipendentemente dalla policy, in quanto la cancellazione è imputabile all'Academy.
 
+6. **Validazione documentale obbligatoria prima del pagamento:** Nessun link di pagamento viene generato senza l'approvazione esplicita di un operatore. Il sistema non accetta né genera pagamenti per prenotazioni in stato `PENDING_DOCS_REVIEW` o `DOCS_REJECTED`.
+
+7. **Scadenza link di pagamento (default 48 ore):** Il link di pagamento inviato dopo l'approvazione documentale ha una validità configurabile (default: 48 ore). Allo scadere, lo Scheduled Job `payment-link-expiry-check` porta il booking a `CANCELLED`, libera il posto in `CourseEdition` e notifica il discente. L'intervallo è impostabile a livello globale o per singolo corso.
+
+8. **Opzione acconto:** L'Academy può configurare, per singolo corso o a livello globale, la possibilità di accettare un acconto (importo fisso o percentuale sull'importo totale) in alternativa al pagamento integrale immediato. In questo caso il booking passa a `DEPOSIT_PAID`; il saldo residuo dovrà essere completato entro un termine configurabile per edizione (es. 7 giorni prima dell'inizio del corso). Il mancato versamento del saldo entro la scadenza attiva un alert di sollecito all'admin.
+
+9. **Conteggio quorum:** Il quorum di attivazione sessione conta esclusivamente i booking in stato `CONFIRMED` o `DEPOSIT_PAID`. I booking in `PENDING_DOCS_REVIEW`, `DOCS_REJECTED` o `PENDING_PAYMENT` non concorrono al raggiungimento della soglia minima.
+
 ---
 
 ## 11. Integrazioni con il Piano Progetto Padre
 
-| Modulo Piano Padre                         | Punto di contatto con Booking                                                                                                                              |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Checkout a Step Obbligati**              | Il Booking è il "prodotto" aggiunto al carrello con metadata `edition_id`; il checkout multi-step raccoglie dati e documenti per quella specifica edizione |
-| **Gestione Documentale**                   | Prima della conferma booking, si verifica il Vault del discente; i documenti mancanti bloccano il pagamento con lista di upload richiesti                  |
-| **Automazione Conferma Corsi (soglia 20)** | Interamente gestita dal Booking Module tramite `check-edition-thresholds` job                                                                              |
-| **Alert e Marketing Automation**           | I reminder pre-corso si integrano con il sistema di alert scadenze; il cross-selling post-corso usa lo storico di `BOOKING.status = ATTENDED`              |
-| **SEO / Schema Markup**                    | Ogni `CourseEdition` esposta pubblicamente genera un tag `EducationEvent` con `startDate`, `endDate`, `remainingAttendeeCapacity`                          |
-| **Modulo B2B (Fase 2)**                    | La colonna `seats` nel `BOOKING` permette già prenotazioni multi-posto; il modulo B2B userà questa struttura per la gestione gruppi aziendali              |
+| Modulo Piano Padre                         | Punto di contatto con Booking                                                                                                                                                                                                       |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Checkout a Step Obbligati**              | Il Booking è il "prodotto" aggiunto al carrello con metadata `edition_id`; il checkout multi-step raccoglie dati e documenti. Il pagamento non avviene nel checkout ma solo dopo la validazione documentale da parte dell'operatore |
+| **Gestione Documentale**                   | L'approvazione dei documenti da parte dell'operatore è il gate che sblocca l'invio del link di pagamento; prima della validazione, il Vault blocca il processo se i documenti obbligatori mancano o sono scaduti                    |
+| **Automazione Conferma Corsi (soglia 20)** | Interamente gestita dal Booking Module tramite `check-edition-thresholds` job                                                                                                                                                       |
+| **Alert e Marketing Automation**           | I reminder pre-corso si integrano con il sistema di alert scadenze; il cross-selling post-corso usa lo storico di `BOOKING.status = ATTENDED`                                                                                       |
+| **SEO / Schema Markup**                    | Ogni `CourseEdition` esposta pubblicamente genera un tag `EducationEvent` con `startDate`, `endDate`, `remainingAttendeeCapacity`                                                                                                   |
+| **Modulo B2B (Fase 2)**                    | La colonna `seats` nel `BOOKING` permette già prenotazioni multi-posto; il modulo B2B userà questa struttura per la gestione gruppi aziendali                                                                                       |
 
 ---
 
